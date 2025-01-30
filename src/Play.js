@@ -24,6 +24,11 @@ class Play extends Phaser.Scene {
         // add background grass
         this.grass = this.add.image(0, 0, 'grass').setOrigin(0)
 
+        // shots counter and overall score
+        this.shotsText = this.add.text(10, 10, 'Shots: 0', { fontSize: '24px', fill: '#fff' })
+        this.scoreText = this.add.text(10, 40, 'Score: 0', { fontSize: '24px', fill: '#fff' })
+        this.percentageText = this.add.text(10, 70, 'Percentage: 0%', { fontSize: '24px', fill: '#fff' })
+
         // add cup
         this.cup = this.physics.add.sprite(width / 2, height / 10, 'cup')
         this.cup.body.setCircle(this.cup.width / 4)
@@ -41,6 +46,9 @@ class Play extends Phaser.Scene {
         let wallA = this.physics.add.sprite(0, height / 4, 'wall')
         wallA.setX(Phaser.Math.Between(0 + wallA.width / 2, width - wallA.width / 2))
         wallA.body.setImmovable(true)
+        wallA.body.setVelocity(100)
+        wallA.body.setBounce(1,0)
+        wallA.body.setCollideWorldBounds(true)
 
         let wallB = this.physics.add.sprite(0, height / 2, 'wall')
         wallB.setX(Phaser.Math.Between(0 + wallB.width / 2, width - wallB.width / 2))
@@ -57,16 +65,28 @@ class Play extends Phaser.Scene {
         // add pointer input
         this.input.on('pointerdown', (pointer) => {
             let shotDirection = pointer.y <= this.ball.y ? -1 : 1
-            this.ball.body.setVelocity(Phaser.Math.Between(-this.SHOT_VELOCITY_X, this.SHOT_VELOCITY_X))
+
+            let relativeX = pointer.x - this.ball.x
+            let xVelocity = Phaser.Math.Clamp(relativeX * 2, -this.SHOT_VELOCITY_X, this.SHOT_VELOCITY_X)
+
+            this.ball.body.setVelocity(xVelocity)
             this.ball.body.setVelocityY(Phaser.Math.Between(this.SHOT_VELOCITY_Y_MIN, this.SHOT_VELOCITY_Y_MAX) * shotDirection)
+
+            // shot taken
+            this.shotsTaken++
         })
+
+        this.shotsTaken = 0
+        this.shotsMade = 0
 
         // cup/ball collision
         this.physics.add.collider(this.ball, this.cup, (ball, cup) => {
-            // ball reset logic
-            ball.destroy()
-            // ball reset logic
-            // count the number of shots
+            // successful shot
+            this.shotsMade++
+            
+            // reset ball position
+            ball.setPosition(width / 2, height - height / 10)
+            ball.setVelocity(0, 0)
         })
 
         // ball/wall collision
@@ -78,14 +98,18 @@ class Play extends Phaser.Scene {
     }
 
     update() {
+        this.shotsText.setText(`Shots: ${this.shotsTaken}`)
+        this.scoreText.setText(`Score: ${this.shotsMade}`)
 
+        let successPercentage = this.shotsTaken === 0 ? 0 : Math.floor(this.shotsMade / this.shotsTaken * 100)
+        this.percentageText.setText(`Percentage: ${successPercentage}%`)
     }
 }
 /*
 CODE CHALLENGE
 Try to implement at least 3/4 of the following features during the remainder of class (hint: each takes roughly 15 or fewer lines of code to implement):
-[ ] Add ball reset logic on successful shot
-[ ] Improve shot logic by making pointer’s relative x-position shoot the ball in correct x-direction
-[ ] Make one obstacle move left/right and bounce against screen edges
+[done] Add ball reset logic on successful shot
+[done] Improve shot logic by making pointer’s relative x-position shoot the ball in correct x-direction
+[done] Make one obstacle move left/right and bounce against screen edges
 [ ] Create and display shot counter, score, and successful shot percentage
 */
