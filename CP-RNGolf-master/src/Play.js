@@ -65,7 +65,8 @@ class Play extends Phaser.Scene {
         this.physics.add.collider(this.ball, this.cup, (ball, cup) => {
             // ball reset logic
             ball.destroy()
-            //ball.reset()
+            // ball reset logic
+            // count the number of shots
         })
 
         // ball/wall collision
